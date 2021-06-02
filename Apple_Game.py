@@ -23,10 +23,10 @@ class Apple(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         self.image = pg.Surface([60,60])
         self.image = pg.image.load(image_path + f'img{number}.png')
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect(center = (pos[0]+30, pos[1]+30))
 
     def destroy(self):
-        self.number = 10
+        self.number = 0
         self.image.fill(bckgrd_color)
 
 
@@ -47,7 +47,15 @@ def draw_apples(apples):
     for apple in apples:
         screen.blit(apple.image, (apple.pos[0], apple.pos[1]))
         
-        
+def is_ten(rect):
+    # 드래그해서 만든 rect와 만나는 사과들의 사과수를 더해서 10이면 사과를 지우는 함수
+    # rect: 드래그해서 만든 직사각형
+    inside_apples = pg.Rect.collidelistall(rect, [apple.rect for apple in apples]) # collidelistall : rect와 부딪힌 list안의 rect들의 index를 모두 리턴하는 함수
+    total_sum = sum([apples[idx].number for idx in inside_apples])
+    if total_sum == 10:
+        for idx in inside_apples:
+            apples[idx].destroy()
+    return total_sum
 
 pg.init()
 
@@ -69,6 +77,7 @@ playing = True
 # Game loop
 while playing:
     events = pg.event.get()
+    rect = pg.Rect(start, dSize)
     
     for event in events:
         if event.type == pg.QUIT:
@@ -81,8 +90,9 @@ while playing:
         elif event.type == pg.MOUSEBUTTONUP:
             end = event.pos
             drawing = False
+            print(is_ten(rect))
             draw_apples(apples)
-
+            
         elif event.type == pg.MOUSEMOTION and drawing:
             end = event.pos
             dSize = end[0]-start[0], end[1]-start[1]
