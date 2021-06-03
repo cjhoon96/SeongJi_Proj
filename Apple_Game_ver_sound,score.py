@@ -9,6 +9,8 @@ pg.mixer.init()                                             #mixer 초기화
 
 game_font = pg.font.SysFont(None,30)                        #폰트 설정
 pop = pg.mixer.Sound("./sound/pop.wav")                     #효과음 변수 지정
+sound_check = True                                          #음소거,해제 관련 변수 디폴트 = 음소거 해제
+press_check = True                                          #중복 방지
 
 # 파이썬 실행 경로 수정
 DIR = Path(__file__).parent.absolute()
@@ -69,7 +71,8 @@ def is_ten(rect):
     if total_sum == 10:
         for idx in inside_apples:
             apples[idx].destroy()
-        pg.mixer.Sound.play(pop)
+        if sound_check:
+            pg.mixer.Sound.play(pop)                           #더해서 10이될시 pop 사운드를 출력
     return total_sum
 
 
@@ -115,5 +118,18 @@ while playing:
             rect = pg.Rect(start, dSize)
             draw_apples(apples)
             pg.draw.rect(screen, pg.Color(10,150,10), rect, 2)
+
+        elif event.type == pg.KEYDOWN and event.key == pg.K_m:             #mute 기능 추가
+            if press_check:
+                if sound_check:
+                    sound_check = False
+                elif not sound_check:
+                    sound_check = True
+                    pg.mixer.Sound.play(pop) 
+                press_check = False
+
+        elif event.type == pg.KEYUP and event.key == pg.K_m:
+            if not press_check:
+                press_check = True
 
     pg.display.flip()
