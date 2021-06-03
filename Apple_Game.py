@@ -1,5 +1,6 @@
 import pygame as pg
 import random, os
+import time
 
 from pathlib import Path
 
@@ -10,33 +11,36 @@ os.chdir(DIR)
 
 image_path = './img/' # 이미지 파일 경로
 bckgrd_color =(10,10,10) # 배경 색, 검은색
+UI_padding = (20, 20)    # 전체 창과의 간격
+apple_padding = 5        # 사과끼리 간격
 
 
 class Apple(pg.sprite.Sprite):
     # 사과 클래스, Sprite 클래스로 만들었음.
 
     def __init__(self, number, pos):
-        self.number = number
-        self.pos = pos
+        self.number = number # 사과에 쓰여있는 숫자
+        self.pos = pos       # 사과 위치
 
         # Sprite 클래스가 기본적으로 가지고 있는 것들
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface([60,60])
+        self.image = pg.Surface([30,30])
         self.image = pg.image.load(image_path + f'img{number}.png')
-        self.rect = self.image.get_rect(center = (pos[0]+30, pos[1]+30))
+        self.rect = self.image.get_rect(center = (pos[0]+15, pos[1]+15))
 
     def destroy(self):
+        # 사과 없애는 함수
         self.number = 0
         self.image.fill(bckgrd_color)
 
 
 def init_apples():
     # 게임 시작 시 실행할 함수, 사과 배열을 만듬
-    board = [[random.randint(1, 9) for _ in range(10)] for _ in range(10)]  # 일단은 10 x 10 배열로 만듦. 나중에 이미지 크기와 함께 조정해야함.
+    board = [[random.randint(0, 9) for _ in range(20)] for _ in range(20)]  # 일단은 10 x 10 배열로 만듦. 나중에 이미지 크기와 함께 조정해야함.
     apples = []
     for i in range(len(board)):
         for j in range(len(board[i])):
-            apples.append(Apple(board[i][j], (60*i,60*j)))  # 지금 이미지가 60픽셀짜리라서 간격도 60
+            apples.append(Apple(board[i][j], (30*i+UI_padding[0]+apple_padding*i,30*j+UI_padding[1]+apple_padding*j)))
 
     return apples
 
@@ -56,11 +60,11 @@ def is_ten(rect):
         for idx in inside_apples:
             apples[idx].destroy()
     return total_sum
-
+ 
 pg.init()
 
 # Screen
-screen_width, screen_height = 600, 600
+screen_width, screen_height = 735, 735
 size = [screen_width, screen_height]
 screen = pg.display.set_mode(size)
 screen.fill(bckgrd_color)
@@ -98,7 +102,6 @@ while playing:
             dSize = end[0]-start[0], end[1]-start[1]
             rect = pg.Rect(start, dSize)
             draw_apples(apples)
-            pg.draw.rect(screen, pg.Color(10,150,10), rect, 4)
+            pg.draw.rect(screen, pg.Color(10,150,10), rect, 2)
 
-    
     pg.display.flip()
