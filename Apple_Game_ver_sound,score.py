@@ -3,6 +3,12 @@ import random, os
 import time
 
 from pathlib import Path
+ 
+pg.init()                                                   #성재 이거 여기로 옮겨써
+pg.mixer.init()                                             #mixer 초기화
+
+game_font = pg.font.SysFont(None,30)                        #폰트 설정
+pop = pg.mixer.Sound("./sound/pop.wav")                     #효과음 변수 지정
 
 # 파이썬 실행 경로 수정
 DIR = Path(__file__).parent.absolute()
@@ -14,6 +20,7 @@ bckgrd_color =(10,10,10) # 배경 색, 검은색
 UI_padding = (20, 20)    # 전체 창과의 간격
 apple_padding = 5        # 사과끼리 간격
 
+score = 0                                               #score 초기화
 
 class Apple(pg.sprite.Sprite):
     # 사과 클래스, Sprite 클래스로 만들었음.
@@ -30,8 +37,10 @@ class Apple(pg.sprite.Sprite):
 
     def destroy(self):
         # 사과 없애는 함수
+        global score                                    #score global 선언
         self.number = 0
         self.image.fill(bckgrd_color)
+        score += 1                                      #스코어 1 추가
 
 
 def init_apples():
@@ -50,6 +59,7 @@ def draw_apples(apples):
     screen.fill(bckgrd_color)
     for apple in apples:
         screen.blit(apple.image, (apple.pos[0], apple.pos[1]))
+        screen.blit(n_score, (10,745))
         
 def is_ten(rect):
     # 드래그해서 만든 rect와 만나는 사과들의 사과수를 더해서 10이면 사과를 지우는 함수
@@ -59,12 +69,12 @@ def is_ten(rect):
     if total_sum == 10:
         for idx in inside_apples:
             apples[idx].destroy()
+        pg.mixer.Sound.play(pop)
     return total_sum
- 
-pg.init()
+
 
 # Screen
-screen_width, screen_height = 735, 735
+screen_width, screen_height = 735, 815                     #아래 여백 만들기
 size = [screen_width, screen_height]
 screen = pg.display.set_mode(size)
 screen.fill(bckgrd_color)
@@ -82,21 +92,23 @@ playing = True
 while playing:
     events = pg.event.get()
     rect = pg.Rect(start, dSize)
-    
+    n_score = game_font.render("Score: " + str(int(score)), True, (200,200,200))  #출력할 스코어
+    screen.blit(n_score, (10,745))                                                #스코어 (10,745)에 출력
+
     for event in events:
         if event.type == pg.QUIT:
             playing = False
-
+            screen.blit(n_score, (10,745)) 
         elif event.type == pg.MOUSEBUTTONDOWN:
             drawing = True
             start = event.pos
-            
+            screen.blit(n_score, (10,745)) 
         elif event.type == pg.MOUSEBUTTONUP:
             end = event.pos
             drawing = False
             print(is_ten(rect))
             draw_apples(apples)
-            
+            screen.blit(n_score, (10,745))
         elif event.type == pg.MOUSEMOTION and drawing:
             end = event.pos
             dSize = end[0]-start[0], end[1]-start[1]
