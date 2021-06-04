@@ -14,7 +14,8 @@ os.chdir(DIR)
 
 game_font = pg.font.SysFont(None,30)                        #폰트 설정
 pop = pg.mixer.Sound("./sound/pop.wav")                     #효과음 변수 지정
-sound_check = True                                          #음소거,해제 관련 변수 디폴트 = 음소거 해제
+vol_idx = 1
+vol = 0.3                                      #음소거,해제 관련 변수 디폴트 = 음소거 해제
 press_check = True                                          #중복 방지
 
 image_path = './img/' # 이미지 파일 경로
@@ -71,15 +72,29 @@ def is_ten(rect):
     if total_sum == 10:
         for idx in inside_apples:
             apples[idx].destroy()
-        if sound_check:
+        if vol_idx:
             pg.mixer.Sound.play(pop)                           #더해서 10이될시 pop 사운드를 출력
     return total_sum
+
+
+
+
+size = (50,50)
+position = (660, 740)
+mute = []
+mute.append(pg.image.load('./mute_img/touch_0.png'))
+mute.append(pg.image.load('./mute_img/touch_1.png'))
+mute.append(pg.image.load('./mute_img/touch_2.png'))
+mute.append(pg.image.load('./mute_img/touch_3.png'))
+mute = [pg.transform.scale(image,size) for image in mute]
 
 def blit_score(score):
     # 점수 출력 함수
     n_score = game_font.render("Score: " + str(int(score)), True, (200,200,200))  # 점수 글자
     font_pos = (10, 725) # 글자 위치
     screen.blit(n_score, font_pos)
+    screen.blit(mute[vol_idx],position)
+
 
 
 # Screen
@@ -101,7 +116,6 @@ playing = True
 while playing:
     events = pg.event.get()
     rect = pg.Rect(start, dSize)
-
     for event in events:
         if event.type == pg.QUIT:
             playing = False
@@ -125,16 +139,33 @@ while playing:
             blit_score(score)
             pg.draw.rect(screen, pg.Color(10,150,10), rect, 2)
 
-        elif event.type == pg.KEYDOWN and event.key == pg.K_m:             #mute 기능 추가
-            if press_check:
-                if sound_check:
-                    sound_check = False
-                elif not sound_check:
-                    sound_check = True
-                    pg.mixer.Sound.play(pop) 
-                press_check = False
+        elif event.type == pg.KEYDOWN:  #mute 기능 upgrade
+            if event.key == pg.K_m:            
+                if press_check:
+                    if vol_idx:
+                        vol_idx = 0
+                        vol = 0
+                    elif not vol_idx:
+                        vol_idx = 3
+                        vol = 0.9
+                        pop.set_volume(vol)
+                        pg.mixer.Sound.play(pop) 
+            elif event.key == pg.K_UP:
+                if press_check and vol_idx < 3:
+                    vol_idx += 1
+                    vol += 0.3
+                    pop.set_volume(vol)
+                    pg.mixer.Sound.play(pop)
+            elif event.key == pg.K_DOWN:
+                if press_check and vol_idx > 0:
+                    vol_idx -= 1
+                    vol -= 0.3
+                    pop.set_volume(vol)
+                    pg.mixer.Sound.play(pop)
+            screen.blit(mute[vol_idx],position)
+            press_check = False
 
-        elif event.type == pg.KEYUP and event.key == pg.K_m:
+        elif event.type == pg.KEYUP:
             if not press_check:
                 press_check = True
 
