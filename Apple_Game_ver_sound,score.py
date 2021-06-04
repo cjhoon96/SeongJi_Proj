@@ -61,7 +61,6 @@ def draw_apples(apples):
     screen.fill(bckgrd_color)
     for apple in apples:
         screen.blit(apple.image, (apple.pos[0], apple.pos[1]))
-    print('Draw apple')
         
 def is_ten(rect):
     # 드래그해서 만든 rect와 만나는 사과들의 사과수를 더해서 10이면 사과를 지우는 함수
@@ -73,7 +72,6 @@ def is_ten(rect):
             apples[idx].destroy()
         if sound_check:
             pg.mixer.Sound.play(pop)                           #더해서 10이될시 pop 사운드를 출력
-    return total_sum
 
 def blit_score(score):
     # 점수 출력 함수
