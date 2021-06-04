@@ -72,13 +72,13 @@ def is_ten(rect):
     if total_sum == 10:
         for idx in inside_apples:
             apples[idx].destroy()
-        if vol_idx:
-            pg.mixer.Sound.play(pop)                           #더해서 10이될시 pop 사운드를 출력
+        pop.set_volume(vol)
+        pg.mixer.Sound.play(pop)
     return total_sum
 
 
 
-
+# vol_idx 현재 볼륨이 0인지 1인지 2인지 3인지
 size = (50,50)
 position = (660, 740)
 mute = []
@@ -86,7 +86,7 @@ mute.append(pg.image.load('./mute_img/touch_0.png'))
 mute.append(pg.image.load('./mute_img/touch_1.png'))
 mute.append(pg.image.load('./mute_img/touch_2.png'))
 mute.append(pg.image.load('./mute_img/touch_3.png'))
-mute = [pg.transform.scale(image,size) for image in mute]
+mute = [pg.transform.scale(image,size) for image in mute]                           #싱기방기
 
 def blit_score(score):
     # 점수 출력 함수
