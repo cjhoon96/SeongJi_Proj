@@ -7,15 +7,15 @@ from pathlib import Path
 pg.init()                                                   #성재 이거 여기로 옮겨써
 pg.mixer.init()                                             #mixer 초기화
 
-game_font = pg.font.SysFont(None,30)                        #폰트 설정
-pop = pg.mixer.Sound("./sound/pop.wav")                     #효과음 변수 지정
-sound_check = True                                          #음소거,해제 관련 변수 디폴트 = 음소거 해제
-press_check = True                                          #중복 방지
-
 # 파이썬 실행 경로 수정
 DIR = Path(__file__).parent.absolute()
 DIR = f'{DIR}'.replace('\\','/')
 os.chdir(DIR)
+
+game_font = pg.font.SysFont(None,30)                        #폰트 설정
+pop = pg.mixer.Sound("./sound/pop.wav")                     #효과음 변수 지정
+sound_check = True                                          #음소거,해제 관련 변수 디폴트 = 음소거 해제
+press_check = True                                          #중복 방지
 
 image_path = './img/' # 이미지 파일 경로
 bckgrd_color =(10,10,10) # 배경 색, 검은색
@@ -61,7 +61,7 @@ def draw_apples(apples):
     screen.fill(bckgrd_color)
     for apple in apples:
         screen.blit(apple.image, (apple.pos[0], apple.pos[1]))
-        screen.blit(n_score, (10,745))
+    print('Draw apple')
         
 def is_ten(rect):
     # 드래그해서 만든 rect와 만나는 사과들의 사과수를 더해서 10이면 사과를 지우는 함수
@@ -74,6 +74,12 @@ def is_ten(rect):
         if sound_check:
             pg.mixer.Sound.play(pop)                           #더해서 10이될시 pop 사운드를 출력
     return total_sum
+
+def blit_score(score):
+    # 점수 출력 함수
+    n_score = game_font.render("Score: " + str(int(score)), True, (200,200,200))  # 점수 글자
+    font_pos = (10, 725) # 글자 위치
+    screen.blit(n_score, font_pos)
 
 
 # Screen
@@ -95,28 +101,28 @@ playing = True
 while playing:
     events = pg.event.get()
     rect = pg.Rect(start, dSize)
-    n_score = game_font.render("Score: " + str(int(score)), True, (200,200,200))  #출력할 스코어
-    screen.blit(n_score, (10,745))                                                #스코어 (10,745)에 출력
 
     for event in events:
         if event.type == pg.QUIT:
             playing = False
-            screen.blit(n_score, (10,745)) 
+
         elif event.type == pg.MOUSEBUTTONDOWN:
             drawing = True
             start = event.pos
-            screen.blit(n_score, (10,745)) 
+
         elif event.type == pg.MOUSEBUTTONUP:
             end = event.pos
             drawing = False
             print(is_ten(rect))
             draw_apples(apples)
-            screen.blit(n_score, (10,745))
+            blit_score(score)
+
         elif event.type == pg.MOUSEMOTION and drawing:
             end = event.pos
             dSize = end[0]-start[0], end[1]-start[1]
             rect = pg.Rect(start, dSize)
             draw_apples(apples)
+            blit_score(score)
             pg.draw.rect(screen, pg.Color(10,150,10), rect, 2)
 
         elif event.type == pg.KEYDOWN and event.key == pg.K_m:             #mute 기능 추가
