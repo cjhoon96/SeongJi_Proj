@@ -162,11 +162,14 @@ while playing:
                     vol -= 0.3
                     pop.set_volume(vol)
                     pg.mixer.Sound.play(pop)
-            screen.blit(mute[vol_idx],position)
+            
             press_check = False
 
         elif event.type == pg.KEYUP:
             if not press_check:
                 press_check = True
+            draw_apples(apples)
+            blit_score(score)
+            screen.blit(mute[vol_idx],position)
 
     pg.display.flip()
