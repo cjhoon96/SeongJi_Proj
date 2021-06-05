@@ -111,7 +111,7 @@ while playing:
         elif event.type == pg.MOUSEBUTTONUP:
             end = event.pos
             drawing = False
-            print(is_ten(rect))
+            is_ten(rect)
             draw_apples(apples)
             blit_score(score)
 
