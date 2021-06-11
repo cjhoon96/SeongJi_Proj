@@ -4,6 +4,8 @@ import time
 import sys
 
 from pathlib import Path
+
+from pygame.constants import MOUSEBUTTONDOWN
  
 pg.init()                                                   #성재 이거 여기로 옮겨써
 pg.mixer.init()                                             #mixer 초기화
@@ -129,23 +131,18 @@ mute.append(pg.image.load('./img/touch_3.png'))
 mute = [pg.transform.scale(image,mute_size) for image in mute]                           #싱기방기
 
 apple_icons = []
-apple_icons.append(pg.image.load('./img/touch_0.png'))                    #아이콘 구하면 수정
-apple_icons.append(pg.image.load('./img/touch_1.png'))
-apple_icons = [pg.transform.scale(image,(10,10)) for image in apple_icons]
-button = apple_icons[0]
-button_on = apple_icons[1]
+apple_icons.append(pg.image.load('./img/apple-icon.png'))                    #아이콘 구하면 수정
+apple_icons.append(pg.image.load('./img/apple-half-icon.png'))
 
 # Screen
 screen_width, screen_height = 735, 800                     #아래 여백 만들기
 screen_size = [screen_width, screen_height]
 screen = pg.display.set_mode(screen_size)
-screen.fill(bckgrd_color)
 
 # UI Surface: 타이머, 스코어, 볼륨 아이콘들을 출력할 Surface
 ui_surf = pg.Surface((screen_width, 75))
 
-# Start page, 게임 시작 시 화면
-start_screen = pg.Surface(screen_size)
+
 
 
 
@@ -156,36 +153,29 @@ apples = init_apples()
 clock = pg.time.Clock()
 
 
-
-
-class Button:
-    def __init__(self, img_in, x, y, width, height, img_act, x_act, y_act, action):
-        self.img_in = img_in
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.img_act = img_act
-        self.x_act = x_act
-        self.y_act = y_act
-        self.action = action
-        mouse = pg.mouse.get_pos()
-        click = pg.mouse.get_pressed()
-        if x + width > mouse[0] > x and y + height > mouse[1] > y:
-            start_screen.blit(img_act, (x_act, y_act))
-            if click[0] and action != None:
-                time.sleep(1)
-                action
-            else:
-                start_screen.blit(img_in,(x,y))
+def Button(screen, icon1, icon2, x, y, boolean):
+    if boolean:
+        screen.blit(icon2,(x,y))
+    else:
+        screen.blit(icon1,(x,y))
+def check_on(l_x, t_y, r_x, b_y):
+    mouse = pg.mouse.get_pos()
+    if l_x <= mouse[0] <= r_x and t_y <= mouse[1] <= b_y:
+        return True
+    else:
+        return False
 
 def quitgame():
     pg.quit()
     sys.exit()
 
 def start_menu():
+    # Start page, 게임 시작 시 화면
+    start_screen = pg.display.set_mode(screen_size)
+    global apple_icons
+    apple_icons = [pg.transform.scale(image,(30,30)) for image in apple_icons]
     menu = True
-    
+    startButton = False
     while menu:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -195,21 +185,24 @@ def start_menu():
         title_font = game_font.render("APPLE GAME", True, (200,200,200))
         start_font = game_font.render("Start ", True, (200,200,200))  # 점수 글자
         start_screen.blit(title_font, (300, 200))
-        start_screen.blit(start_font, (300, 350))
-        screen.blit(start_screen, (0,0))
-        startButton = Button(button, 250, 220, 100, 100, button_on, 250, 220, playing())
+        start_screen.blit(start_font, (330, 350))
+        Button(start_screen, apple_icons[0], apple_icons[1], 295, 340, startButton)
+        Button(start_screen, apple_icons[0], apple_icons[1], 377, 340, startButton)
+        startButton = check_on(330, 350, 375, 380)
+        if startButton and event.type == pg.MOUSEBUTTONDOWN:
+            playing()
+            break
         pg.display.flip()
-        clock.tick(15)
 
 def playing():
-    global playing , timeover, waiting, start, end, dSize, start_ticks
+    global playing , timeover, waiting, start, end, dSize, start_ticks, drawing
     # Game loopdrawing = False
+    screen.fill(bckgrd_color)
     while playing:
         clock.tick(60)
         # 처음 게임 시작시 클릭할 때까지 대기
         if waiting:                             
             while True:
-                start_screen.fill(pg.Color(0,0,0))
                 pg.display.flip()
                 event = pg.event.wait()
                 if event.type == pg.QUIT:        # Quit
@@ -288,6 +281,41 @@ def playing():
                 event = pg.event.wait()
                 if event.type == pg.QUIT:        # Quit
                     playing = False
+                if event.type == MOUSEBUTTONDOWN:
                     break
+            last_menu(score)
+                    
+
+def print_apple(n,x,y,size,screen):
+    global apple_icons
+    apple_icons = [pg.transform.scale(image,(size,size)) for image in apple_icons]
+    lines = n // 20
+    last_line = n % 20
+    if lines:
+        for i in range(lines):
+            for j in range(20):
+                screen.blit(apple_icons[1],(x + (j * size),y + (i * size)))
+        y += (lines * size)
+    for i in range(20):
+        if i < last_line:
+            screen.blit(apple_icons[1],(x + (i * size), y))
+        else:
+            screen.blit(apple_icons[0],(x + (i * size), y))
+    y += size
+    for i in range(20 - 1 -lines):
+        for j in range(20):
+            screen.blit(apple_icons[0],(x + (j * size),y + (i * size)))
+
+def last_menu(score):
+    result_screen = pg.display.set_mode(screen_size)
+    result_screen.fill(bckgrd_color)
+    n = 0
+    while True:
+        result_screen.fill(bckgrd_color)
+        score_font = game_font.render("SCORE: " + str(int(n)), True, (200,200,200))  # 점수 글자
+        result_screen.blit(score_font, (300, 200))
+        print_apple(n,200,200,25,result_screen)
+
+
 
 start_menu()
