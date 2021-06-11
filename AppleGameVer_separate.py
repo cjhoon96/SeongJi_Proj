@@ -289,3 +289,5 @@ def playing():
                 if event.type == pg.QUIT:        # Quit
                     playing = False
                     break
+
+start_menu()
