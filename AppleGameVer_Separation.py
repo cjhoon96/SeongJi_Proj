@@ -218,7 +218,7 @@ def start_menu():
                 if startButton:
                     timeover = False
                     score = 0
-                    play()
+                    return play()
                 else:
                     startpress = False
             
@@ -248,10 +248,11 @@ def start_menu():
 
 #게임 실행 함수
 def play():
-    global playing , timeover, waiting, start, end, dSize, start_ticks, drawing, apples, press_check, pop_score
+    global playing , timeover, waiting, start, end, dSize, start_ticks, drawing, apples, press_check, pop_score, vol_idx, vol
     # 사과들 초기화
     apples = init_apples()
     start_ticks = pg.time.get_ticks()   # 타이머 시작
+    draw_apples(apples)
     while playing:
         pop_score = 0
         clock.tick(60)
@@ -387,14 +388,14 @@ def last_menu(scr):
                 if againButton:
                     timeover = False
                     score = 0
-                    play()
+                    return play()
                 else:
                     againpress = False
             elif menuButton and event.type == pg.MOUSEBUTTONDOWN:
                 menupress = True
             elif menupress and event.type == pg.MOUSEBUTTONUP:
                 if menuButton:
-                    start_menu()
+                    return start_menu()
                 else:
                     menupress = False
                 
