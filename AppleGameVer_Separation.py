@@ -27,6 +27,8 @@ mute = [pg.transform.scale(image,mute_size) for image in mute]                  
 apple_icons = []
 apple_icons.append(pg.image.load('./img/apple-icon.png'))                    #아이콘 구하면 수정
 apple_icons.append(pg.image.load('./img/apple-half-icon.png'))
+apple_icons = [pg.transform.scale(image,(35,35)) for image in apple_icons]
+appleImgs = [pg.transform.scale(image,(15,15)) for image in apple_icons]
 
 #font, sound
 game_font = pg.font.SysFont(None, 30)                        #폰트 설정
@@ -326,25 +328,24 @@ def play():
 
     last_menu(score)                                                        ## 이부분에서 오류
 
-def print_apple(n,x,y,size,screen):
-    global apple_icons
-    apple_icons = [pg.transform.scale(image,(size,size)) for image in apple_icons]
+def print_apple(n,x,y,screen):
+    global appleImgs
     lines = n // 20
     last_line = n % 20
     if lines:
         for i in range(lines):
             for j in range(20):
-                screen.blit(apple_icons[1],(x + (j * size),y + (i * size)))
-        y += (lines * size)
+                screen.blit(appleImgs[1],(x + (j * 15),y + (i * 15)))
+        y += (lines * 15)
     for i in range(20):
         if i < last_line:
-            screen.blit(apple_icons[1],(x + (i * size), y))
+            screen.blit(appleImgs[1],(x + (i * 15), y))
         else:
-            screen.blit(apple_icons[0],(x + (i * size), y))
-    y += size
+            screen.blit(appleImgs[0],(x + (i * 15), y))
+    y += 15
     for i in range(20 - 1 -lines):
         for j in range(20):
-            screen.blit(apple_icons[0],(x + (j * size),y + (i * size)))
+            screen.blit(appleImgs[0],(x + (j * 15),y + (i * 15)))
 
 #게임 결과 함수    
 def last_menu(scr):
@@ -367,7 +368,7 @@ def last_menu(scr):
             result_screen.fill(bckgrd_color)
             score_p = score_font.render("SCORE: " + str(int(i)), True, (200,200,200))  # 점수 글자
             result_screen.blit(score_p, (255, 100))
-            print_apple(i,210,150,15,result_screen)
+            print_apple(i,210,150,result_screen)
             if i < scr:
                 i += 1
                 pg.display.flip() 
