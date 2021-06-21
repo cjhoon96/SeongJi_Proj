@@ -2,6 +2,8 @@ import pygame as pg
 import random, os
 import time
 import sys
+import sqlite3
+import datetime
 
 from pathlib import Path
 
@@ -36,7 +38,6 @@ pop = pg.mixer.Sound("./sound/pop.wav")                     #효과음 변수 �
 vol_idx = 1                                    # vol_idx 현재 볼륨이 0인지 1인지 2인지 3인지
 vol = 0.3                                      #음소거,해제 관련 변수 디폴트 = 음소거 해제
 
-
 # Screens
 screen_width, screen_height = 735, 800                      #아래 여백 만들기
 screen_size = [screen_width, screen_height]
@@ -46,32 +47,33 @@ start_screen = pg.display.set_mode(screen_size)             #시작메뉴 스크
 # UI Surface: 타이머, 스코어, 볼륨 아이콘들을 출력할 Surface
 ui_surf = pg.Surface((screen_width, 75))
 
-
-
 bckgrd_color =(10,10,10) # 배경 색, 검은색
 UI_padding = (20, 20)    # 전체 창과의 간격
 apple_padding = 5        # 사과끼리 간격
-
 
 # Game loopdrawing = False
 
 # 타이머
 clock = pg.time.Clock()
 screen.fill(bckgrd_color)
+
 # 드래그 직사각형 그리기 위한 변수
 drawing = False
 dSize = (0,0)
 start = (0,0)
 end = (0,0)
+
 playing = True
 timeover = False
 waiting = True
-press_check = True                                          #중복 방지
+press_check = True                             #중복 방지
 score = 0                                      #score 초기화
 timeover = False
 pop_score = 0
 easy = False
 plus_time = 0
+
+now_time = str(datetime.datetime.now())
 
 class Apple(pg.sprite.Sprite):
     # 사과 클래스, Sprite 클래스로 만들었음.
@@ -126,11 +128,10 @@ def draw_time():
     # 타이머 그리는 함수
     global timeover, start_ticks, pop_score, plus_time # 타이머가 0이 되면 timeover를 True로 바꿈
     start_ticks = int(start_ticks)
-    # 타이머 그 밖에 하얀 네모
+
     timer_case_pos = (10, 45)
     timer_case_size = (630, 20)
     timer_case_rect = pg.Rect(timer_case_pos,timer_case_size)
-    
 
     if easy and pop_score >= 3:
         start_ticks += 3000
@@ -169,6 +170,7 @@ def Button(screen, icon1, icon2, x, y, boolean):
         screen.blit(icon2,(x,y))
     else:
         screen.blit(icon1,(x,y))
+
 def check_on(l_x, t_y, r_x, b_y):
     mouse = pg.mouse.get_pos()
     if l_x <= mouse[0] <= r_x and t_y <= mouse[1] <= b_y:
@@ -176,13 +178,75 @@ def check_on(l_x, t_y, r_x, b_y):
     else:
         return False
 
-
-
 #게임 종료 함수
 def quitgame():
     pg.quit()
     sys.exit()
 
+# 점수 기록 페이지 함수
+def score_page():
+    global timeover, score
+
+    score_font = pg.font.SysFont(None, 40)
+    text_font = pg.font.SysFont(None, 60)
+
+    score_history = load_scores()
+    score_data_screen = pg.display.set_mode(screen_size)
+    
+    againpress = False
+    menupress = False
+
+    waiting = True
+    while waiting:
+        events = pg.event.get()
+        for event in events:
+            againButton = check_on(296, 500, 440, 540)
+            menuButton = check_on(302, 600, 430, 640)
+
+            if againButton:
+                again = text_font.render("AGAIN",True,(255,255,0))
+            else:
+                again = text_font.render("AGAIN",True,(200,200,200))
+
+            if menuButton:
+                menu = text_font.render("MENU",True,(255,255,0))
+            else:
+                menu = text_font.render("MENU",True,(200,200,200))
+
+            if event.type == pg.QUIT:
+                quitgame()
+
+            if againButton and event.type == pg.MOUSEBUTTONDOWN:
+                againpress = True
+            elif againpress and event.type == pg.MOUSEBUTTONUP:
+                if againButton:
+                    timeover = False
+                    score = 0
+                    return play()
+                else:
+                    againpress = False
+
+            elif menuButton and event.type == pg.MOUSEBUTTONDOWN:
+                menupress = True
+            elif menupress and event.type == pg.MOUSEBUTTONUP:
+                if menuButton:
+                    return start_menu()
+                else:
+                    menupress = False
+        
+            score_data_screen.fill(bckgrd_color)
+            
+            for idx, score in enumerate(score_history):
+                if score[1] == now_time:
+                    score_text = score_font.render(f'{idx+1:>3d}. {score[0]:>4d} apples!   {score[1][:19]:}', True, (200, 200, 0))
+                else:
+                    score_text = score_font.render(f'{idx+1:>3d}. {score[0]:>4d} apples!   {score[1][:19]:}', True, (200, 200, 200))
+                score_data_screen.blit(score_text, (50, 100+40*idx,430,150+40*idx))
+
+            score_data_screen.blit(again,(296,500))
+            score_data_screen.blit(menu,(302,600))
+
+        pg.display.flip()
 
 #시작 메뉴 함수
 def start_menu():
@@ -326,7 +390,7 @@ def play():
         blit_ui(score)
         pg.display.flip()
 
-    last_menu(score)                                                        ## 이부분에서 오류
+    last_menu(score)                                                       
 
 def print_apple(n,x,y,screen):
     global appleImgs
@@ -350,18 +414,26 @@ def print_apple(n,x,y,screen):
 #게임 결과 함수    
 def last_menu(scr):
     global timeover, score
+
+    if not os.path.isfile('scoresdata.db'):
+        firstTimeDB()
+    save_score(score)
+
     score_font = pg.font.SysFont(None, 60)
-    
     i = 0
     last = True
     againpress = False
     menupress = False
+    score_data_press = False
+
     while last:
         events = pg.event.get()
         
         for event in events:
             againButton = check_on(296, 500, 440, 540)
             menuButton = check_on(302, 600, 430, 640)
+            score_data_Button = check_on(302, 700, 430, 740)
+
             if event.type == pg.QUIT:
                 quitgame()
             result_screen = pg.display.set_mode(screen_size)
@@ -369,20 +441,28 @@ def last_menu(scr):
             score_p = score_font.render("SCORE: " + str(int(i)), True, (200,200,200))  # 점수 글자
             result_screen.blit(score_p, (255, 100))
             print_apple(i,210,150,result_screen)
+
             if i < scr:
                 i += 1
                 pg.display.flip() 
                 time.sleep(0.2)
                 continue
+
             if againButton:
                 again = score_font.render("AGAIN",True,(255,255,0))
             else:
                 again = score_font.render("AGAIN",True,(200,200,200))
+
             if menuButton:
                 menu = score_font.render("MENU",True,(255,255,0))
-                
             else:
                 menu = score_font.render("MENU",True,(200,200,200))
+
+            if score_data_Button:
+                score_data = score_font.render("Go to Score",True,(255,255,0))
+            else:
+                score_data = score_font.render("Go to Score",True,(200,200,200))
+
             if againButton and event.type == pg.MOUSEBUTTONDOWN:
                 againpress = True
             elif againpress and event.type == pg.MOUSEBUTTONUP:
@@ -399,12 +479,58 @@ def last_menu(scr):
                     return start_menu()
                 else:
                     menupress = False
+
+            elif score_data_Button and event.type == pg.MOUSEBUTTONDOWN:
+                score_data_press = True
+            elif score_data_press and event.type == pg.MOUSEBUTTONUP:
+                if score_data_Button:
+                    return score_page()
+                else:
+                    score_data_press = False
                 
             result_screen.blit(again,(296,500))
             result_screen.blit(menu,(302,600))
+            result_screen.blit(score_data,(302,700))
             
         pg.display.flip() 
         n = 0
+
+# 데이터 저장
+def save_score(score):
+    global now_time
+    insert_task_query = "INSERT INTO scores VALUES (?, ?)"
+    now_time = str(datetime.datetime.now())
+    insert_task_data = (score, now_time)
+    runQuery(insert_task_query, insert_task_data)
+
+# 데이터 불러오기
+def load_scores():
+    load_tasks_query = "SELECT score, date FROM scores ORDER BY score DESC, date DESC LIMIT 10"
+    my_scores = runQuery(load_tasks_query, receive=True)
+
+    return my_scores
+
+# 데이터베이스 연결
+def runQuery(sql, data=None, receive=False):
+    conn = sqlite3.connect("scoresdata.db")
+    cursor = conn.cursor()
+    if data:
+        cursor.execute(sql, data)
+    else:
+        cursor.execute(sql)
+
+    if receive:
+        return cursor.fetchall()
+    else:
+        conn.commit()
+
+    conn.close()
+
+# 데이터베이스가 없는 경우 DB 생성
+def firstTimeDB():
+    create_tables = "CREATE TABLE scores (score INTEGER, date TEXT)"
+    runQuery(create_tables)
+
 
 
 start_menu()
